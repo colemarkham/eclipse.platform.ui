@@ -174,7 +174,16 @@ public class HandledContributionItem extends ContributionItem {
 	}
 
 	// HACK!! local 'static' timerExec...should move out of this class post 4.1
-	public static ToolItemUpdateTimer toolItemUpdater = new ToolItemUpdateTimer();
+	private static ThreadLocal<ToolItemUpdateTimer> toolItemUpdater = new ThreadLocal<ToolItemUpdateTimer>();
+
+	private static ToolItemUpdateTimer getToolItemUpdater() {
+		ToolItemUpdateTimer timer = toolItemUpdater.get();
+		if (timer == null) {
+			timer = new ToolItemUpdateTimer();
+			toolItemUpdater.set(timer);
+		}
+		return timer;
+	}
 
 	private static final String FORCE_TEXT = "FORCE_TEXT"; //$NON-NLS-1$
 	private static final String ICON_URI = "iconURI"; //$NON-NLS-1$
@@ -424,7 +433,7 @@ public class HandledContributionItem extends ContributionItem {
 		widget = item;
 		model.setWidget(widget);
 		widget.setData(AbstractPartRenderer.OWNING_ME, model);
-		toolItemUpdater.registerItem(this);
+		getToolItemUpdater().registerItem(this);
 
 		update(null);
 		hookCheckListener();
@@ -669,7 +678,7 @@ public class HandledContributionItem extends ContributionItem {
 				unreferenceRunnable = null;
 			}
 			unhookCheckListener();
-			toolItemUpdater.removeItem(this);
+			getToolItemUpdater().removeItem(this);
 			if (infoContext != null) {
 				infoContext.dispose();
 				infoContext = null;
